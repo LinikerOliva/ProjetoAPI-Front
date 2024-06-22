@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Filme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/index.css">
+</head>
+<body>
+<div class="sidenav" id="mySidenav">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <span class="fs-4">CineApp</span>
+    </a>
+    <div class="user-info">
+        <h2 id="user-name">Olá</h2>
+        <p id="user-email"></p>
+        <p id="user-type"></p>
+    </div>
+
+    <a href="./login.html" id="loginLink">Login</a>
+    <a href="./usuarios/cadastro.html" id="cadastroLink">Cadastro</a>
+    <a href="./filmes/filmes.html" id="filmesLink"><i class="fas fa-plus"></i> Cadastrar Filmes</a>
+    <a href="./usuarios/usuarios.html" id="usuariosLink"><i class="fas fa-plus"></i> Cadastrar Usuarios</a>
+    <a href="#" id="logoutLink">Logout</a>
+</div>
+
+<div id="main" class="container">
+    <main>
+        <section class="py-5 text-center">
+            <h2>Nota de Avaliação</h2>
+            <div id="media-avaliacao" class="star-rating mb-4"></div>
+            <div class="row">
+                <div class="col-lg-6 col-md-8 mx-auto">
+                    <h1 id="filmeTitulo" class="fw-light">Detalhes do Filme</h1>
+                    <img id="filmeImagem" src="" alt="Imagem do Filme" class="img-fluid mb-4">
+                    <p id="filmeGenero" class="lead text-muted"></p>
+                    <p id="filmeDescricao" class="lead text-muted"></p>
+                    <button type="button" class="btn btn-primary" onclick="abrirModal()">Assistir Trailer</button>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-center mb-4">Adicionar Avaliação</h2>
+            <form id="formAvaliacao" class="text-center mb-4">
+                <div class="star-rating mb-3">
+                    <input type="radio" id="5-stars" name="rating" value="5" required /><label for="5-stars" class="star">&#9733;</label>
+                    <input type="radio" id="4-stars" name="rating" value="4" /><label for="4-stars" class="star">&#9733;</label>
+                    <input type="radio" id="3-stars" name="rating" value="3" /><label for="3-stars" class="star">&#9733;</label>
+                    <input type="radio" id="2-stars" name="rating" value="2" /><label for="2-stars" class="star">&#9733;</label>
+                    <input type="radio" id="1-star" name="rating" value="1" /><label for="1-star" class="star">&#9733;</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+            </form>
+
+            <h2 class="text-center mb-4">Comentários</h2>
+            <div id="lista-comentarios" class="list-group mb-4"></div>
+
+            <h2 class="text-center mb-4">Adicionar Comentário</h2>
+            <form id="formComentario" class="mb-4">
+                <div class="mb-3">
+                    <textarea id="comentario" name="comentario" rows="4" class="form-control" required placeholder="Escreva seu comentário aqui..."></textarea>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Enviar Comentário</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+
+<!-- Modal para o trailer -->
+<div id="trailerModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal()">&times;</span>
+        <div class="modal-body">
+            <div class="ratio ratio-16x9">
+                <iframe id="trailerVideo" src="" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script src="./js/script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadUserDataFromLocalStorage();
+    checkLoginStatus();
+    
+    const filmeId = new URLSearchParams(window.location.search).get('id');
+    if (!filmeId) {
+        alert('ID do filme não encontrado.');
+        return;
+    }
+
+    carregarAvaliacoes(filmeId);
+    carregarFilme(filmeId);
+    carregarComentarios(filmeId);
+});
+
+function abrirModal() {
+    const modal = document.getElementById('trailerModal');
+    modal.style.display = 'block';
+
+    // Carrega o vídeo do YouTube quando a modal é aberta
+    const filmeId = new URLSearchParams(window.location.search).get('id');
+    carregarVideoYT(filmeId);
+}
+
+function fecharModal() {
+    document.getElementById('trailerModal').style.display = 'none';
+}
+
+
+// Função para carregar o vídeo do YouTube na modal
+async function carregarVideoYT(filmeId) {
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/filmes/${filmeId}`);
+        const data = await response.json();
+        const filme = data.filme;
+        
+        // Extrai o ID do vídeo do YouTube da URL completa armazenada no banco de dados
+        const videoId = extrairIdDoVideoYT(filme.url_trailer);
+        const trailerUrl = `https://www.youtube.com/embed/${videoId}`;
+        
+        document.getElementById('trailerVideo').src = trailerUrl; // Adiciona a URL do trailer no iframe
+    } catch (error) {
+        console.error('Erro ao carregar vídeo do YouTube:', error);
+    }
+}
+
+// Função auxiliar para extrair o ID do vídeo do YouTube
+function extrairIdDoVideoYT(url) {
+    const urlParams = new URLSearchParams(new URL(url).search);
+    return urlParams.get('v');
+}
+
+    async function obterNomeUsuario(userId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/usuarios/${userId}`);
+            if (!response.ok) {
+                throw new Error('Erro ao obter nome do usuário');
+            }
+            const data = await response.json();
+            return data.usuario.nome;
+        } catch (error) {
+            console.error('Erro ao obter nome do usuário:', error);
+            return 'Usuário desconhecido';
+        }
+    }
+
+    const formAvaliacao = document.getElementById('formAvaliacao');
+        formAvaliacao.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o comportamento padrão de submissão do formulário
+
+            const nota = document.querySelector('input[name="rating"]:checked');
+            if (!nota) {
+                alert('Por favor, selecione uma nota antes de enviar.');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Token de autenticação não encontrado. Faça login para enviar uma avaliação.');
+                return;
+            }
+
+            const filmeId = new URLSearchParams(window.location.search).get('id');
+            if (!filmeId) {
+                alert('ID do filme não encontrado.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/avaliacoes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id_filme: filmeId, nota: parseInt(nota.value) })
+                });
+
+                if (response.ok) {
+                    alert('Avaliação enviada com sucesso.');
+                    carregarAvaliacoes(filmeId); // Atualiza a média de avaliações na página
+                    formAvaliacao.reset(); // Limpa o formulário após o envio
+                } else {
+                    const data = await response.json();
+                    alert(`Erro ao enviar avaliação: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar avaliação:', error);
+                alert('Erro ao enviar avaliação. Verifique o console para mais detalhes.');
+            }
+        });
+
+    const formComentario = document.getElementById('formComentario');
+        formComentario.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Impede o comportamento padrão de submissão do formulário
+
+            const comentario = document.getElementById('comentario').value.trim(); // Obtém o valor do comentário e remove espaços extras
+            if (comentario === '') {
+                alert('Por favor, escreva um comentário antes de enviar.');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Token de autenticação não encontrado. Faça login para enviar um comentário.');
+                return;
+            }
+
+            const filmeId = new URLSearchParams(window.location.search).get('id');
+            if (!filmeId) {
+                alert('ID do filme não encontrado.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/comentarios', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id_filme: filmeId, comentario: comentario })
+                });
+
+                if (response.ok) {
+                    alert('Comentário enviado com sucesso.');
+                    carregarComentarios(filmeId); // Atualiza a lista de comentários na página
+                    formComentario.reset(); // Limpa o formulário após o envio
+                } else {
+                    const data = await response.json();
+                    alert(`Erro ao enviar comentário: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar comentário:', error);
+                alert('Erro ao enviar comentário. Verifique o console para mais detalhes.');
+            }
+        });
+
+    function exibirEstrelasAvaliacao(media) {
+        const mediaArredondada = Math.round(media);
+        let starsHTML = '';
+
+        for (let i = 0; i < mediaArredondada; i++) {
+            starsHTML += '<i class="fas fa-star" style="color: #ffc700;"></i>';
+        }
+
+        for (let i = mediaArredondada; i < 5; i++) {
+            starsHTML += '<i class="far fa-star" style="color: #ccc;"></i>';
+        }
+
+        const mediaAvaliacaoDiv = document.getElementById('media-avaliacao');
+        mediaAvaliacaoDiv.innerHTML = starsHTML + ` (${media.toFixed(2)})`;
+    }
+
+
+    async function carregarFilme(filmeId) {
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/filmes/${filmeId}`);
+        const data = await response.json();
+        const filme = data.filme;
+        
+        // Preenche os detalhes do filme na página
+        document.getElementById('filmeTitulo').textContent = filme.titulo;
+        document.getElementById('filmeDescricao').textContent = filme.descricao;
+        document.getElementById('filmeGenero').textContent = filme.genero;
+        document.getElementById('filmeImagem').src = filme.caminho_imagem;
+    } catch (error) {
+        console.error('Erro ao carregar filme:', error);
+    }
+}
+
+    async function carregarAvaliacoes(filmeId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/avaliacoes/${filmeId}`);
+            const data = await response.json();
+            const avaliacoes = data.avaliacoes;
+            const media = avaliacoes.reduce((total, avaliacao) => total + avaliacao.nota, 0) / avaliacoes.length;
+            exibirEstrelasAvaliacao(media);
+        } catch (error) {
+            console.error('Erro ao carregar avaliações:', error);
+        }
+    }
+
+    async function carregarComentarios(filmeId) {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/comentarios/${filmeId}`);
+            const data = await response.json();
+            const comentarios = data.comentarios;
+            const listaComentariosDiv = document.getElementById('lista-comentarios');
+            listaComentariosDiv.innerHTML = '';
+            for (const comentario of comentarios) {
+                const nomeUsuario = await obterNomeUsuario(comentario.id_usuario);
+                const comentarioElement = document.createElement('div');
+                comentarioElement.classList.add('list-group-item');
+                comentarioElement.innerHTML = `<strong>${nomeUsuario}:</strong> ${comentario.comentario}`; //<small>${comentario.data_comentario}</small>
+                listaComentariosDiv.appendChild(comentarioElement);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar comentários:', error);
+        }
+    }
+</script>
+</body>
+</html>

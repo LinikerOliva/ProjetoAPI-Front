@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Login</h2>
+        <form id="login-form">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='cadastro.html'">Cadastrar</button>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+        const email = document.getElementById('email').value;
+        const senha = document.getElementById('password').value;
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, senha })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.access_token);
+                // Salvar o user_id no localStorage
+                localStorage.setItem('user_id', data.user_id); // Certifique-se de que data.user_id esteja definido
+
+                // Redirecionar para a página index.html com o user_id definido
+                window.location.href = `index.html?user_id=${data.user_id}`;
+            } else {
+                alert('Erro ao fazer login. Verifique suas credenciais.');
+            }
+        } catch (error) {
+            console.error('Erro ao fazer login:', error);
+            alert('Erro ao fazer login. Verifique suas credenciais.');
+        }
+    });
+
+
+</script>
+</body>
+
+</html>

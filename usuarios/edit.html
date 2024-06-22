@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Usuário - CinemaApp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="container mt-5">
+                    <h2>Editar Usuário</h2>
+                    <form id="edit-user-form" style="max-width: 80vw;" class="mx-auto mt-4" onsubmit="salvarUsuario(event)">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="senha" name="senha" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tipo_conta">Tipo de Conta:</label>
+                            <select class="form-control" id="tipo_conta" name="tipo_conta" required>
+                                <option value="0">Usuário</option>
+                                <option value="1">Administrador</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i></button>
+                        <a href="./usuarios.html" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i></a>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            carregarUsuario();
+        });
+
+        async function carregarUsuario() {
+            const usuarioId = pegarUsuarioId();
+            const response = await fetch(`http://127.0.0.1:5000/usuarios/${usuarioId}`);
+            const data = await response.json();
+            
+            if (data.usuario) {
+                const usuario = data.usuario;
+                
+                document.getElementById('nome').value = usuario.nome || '';
+                document.getElementById('email').value = usuario.email || '';
+                document.getElementById('tipo_conta').value = usuario.is_admin ? '1' : '0';
+            } else {
+                alert('Usuário não encontrado');
+            }
+        }
+
+        function pegarUsuarioId() {
+            const url = window.location.href;
+            const urlObj = new URL(url);
+            const params = new URLSearchParams(urlObj.search);
+            return params.get('id');
+        }
+
+        async function salvarUsuario(evento) {
+            evento.preventDefault();
+            
+            const usuarioId = pegarUsuarioId();
+            const isAdmin = document.getElementById('tipo_conta').value === '1';
+
+            const response = await fetch(`http://127.0.0.1:5000/usuarios/${usuarioId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nome: document.getElementById('nome').value,
+                    email: document.getElementById('email').value,
+                    senha: document.getElementById('senha').value,
+                    is_admin: isAdmin
+                })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            window.location.href = '../usuarios/usuarios.html';
+        }
+    </script>
+</body>
+</html>

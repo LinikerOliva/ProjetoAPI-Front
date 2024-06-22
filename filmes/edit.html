@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Filme - CinemaApp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+                <span class="fs-4">CineApp</span>
+            </a>
+        </header>
+    </div>
+
+    <div class="container mt-5">
+        <h2>Editar Filme</h2>
+        <form id="edit-film-form" style="max-width: 80vw;" class="mx-auto mt-4" onsubmit="salvarFilme(event)">
+            <div class="mb-3">
+                <label for="titulo" class="form-label">Título</label>
+                <input type="text" class="form-control" id="titulo" name="titulo" required>
+            </div>
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descrição</label>
+                <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="ano" class="form-label">Ano</label>
+                <input type="number" class="form-control" id="ano" name="ano" required>
+            </div>
+            <div class="mb-3">
+                <label for="genero" class="form-label">Gênero</label>
+                <input type="text" class="form-control" id="genero" name="genero" required>
+            </div>
+            <div class="mb-3">
+                <label for="caminho_imagem" class="form-label">Caminho da Imagem</label>
+                <input type="text" class="form-control" id="caminho_imagem" name="caminho_imagem" required>
+            </div>
+            <div class="mb-3">
+                <label for="url_trailer" class="form-label">URL do Trailer</label>
+                <input type="text" class="form-control" id="url_trailer" name="url_trailer" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i></button>
+            <a href="../filmes/filmes.html" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i></a>
+        </form>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            carregarFilme();
+        });
+    
+        async function carregarFilme() {
+            const filmeId = pegarFilmeId();
+            const response = await fetch(`http://127.0.0.1:5000/filmes/${filmeId}`);
+            const data = await response.json();
+            
+            if (data.filme) {
+                const filme = data.filme;
+                
+                document.getElementById('titulo').value = filme.titulo;
+                document.getElementById('descricao').value = filme.descricao;
+                document.getElementById('ano').value = filme.ano;
+                document.getElementById('genero').value = filme.genero;
+                document.getElementById('caminho_imagem').value = filme.caminho_imagem || '';
+                document.getElementById('url_trailer').value = filme.url_trailer || '';
+            } else {
+                alert('Filme não encontrado');
+            }
+        }
+    
+        function pegarFilmeId() {
+            const url = window.location.href;
+            const urlObj = new URL(url);
+            const params = new URLSearchParams(urlObj.search);
+            return params.get('id');
+        }
+    
+        async function salvarFilme(evento) {
+            evento.preventDefault();
+            
+            const filmeId = pegarFilmeId();
+            const response = await fetch(`http://127.0.0.1:5000/filmes/${filmeId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    titulo: document.getElementById('titulo').value,
+                    descricao: document.getElementById('descricao').value,
+                    ano: document.getElementById('ano').value,
+                    genero: document.getElementById('genero').value,
+                    caminho_imagem: document.getElementById('caminho_imagem').value,
+                    url_trailer: document.getElementById('url_trailer').value
+                })
+            });
+    
+            const data = await response.json();
+            alert(data.message);
+            window.location.href = '../filmes/filmes.html';
+        }
+    </script>
+</body>
+
+</html>
